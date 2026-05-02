@@ -60,7 +60,13 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
   INSERT INTO public.profiles (vk_user_id, full_name, phone, role, host_access_level)
-  VALUES (NEW.vk_id::text, NEW.full_name, NEW.phone, NEW.role, NEW.host_access_level)
+  VALUES (
+    NEW.vk_id::text,
+    NEW.full_name,
+    NEW.phone,
+    NEW.role,
+    COALESCE(NEW.host_access_level, 'basic')
+  )
   RETURNING id, vk_id, full_name, phone, role, host_access_level, is_blocked, created_at
   INTO NEW.id, NEW.vk_id, NEW.full_name, NEW.phone, NEW.role, NEW.host_access_level, NEW.is_blocked, NEW.created_at;
   RETURN NEW;

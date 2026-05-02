@@ -36,7 +36,13 @@ export async function POST(request: NextRequest) {
     if (!existing) {
       const { data: created, error: createError } = await supabase
         .from("app_users")
-        .insert({ vk_id: vkId, full_name: fullName, phone, role: intent })
+        .insert({
+          vk_id: vkId,
+          full_name: fullName,
+          phone,
+          role: intent,
+          host_access_level: "basic",
+        })
         .select("id,vk_id,role,is_blocked")
         .single();
 
