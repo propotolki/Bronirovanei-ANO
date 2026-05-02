@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 import { VkInit } from '@/components/vk-init';
 
 export const metadata: Metadata = {
-  title: 'VK Rental',
-  description: 'Аренда жилья в VK Mini Apps',
+  title: 'Аренда помещений НН',
+  description: 'Аренда помещений для мероприятий в Нижнем Новгороде',
 };
 
 export default function RootLayout({
@@ -15,13 +15,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className={cn("font-body antialiased min-h-screen bg-background")}>
+    <html lang="ru" suppressHydrationWarning>
+      <body className={cn("font-sans antialiased min-h-screen bg-background")}>
         <VkInit />
         <main>{children}</main>
         <Toaster />
