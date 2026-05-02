@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* My storehouse — светлая iOS тема */
+    --background: 0 0% 100%;
+    --foreground: 200 18% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 200 18% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 18% 15%;
+    --primary: 145 63% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 200 18% 15%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 200 10% 60%;
+    --accent: 145 63% 42%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 6 78% 57%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 20% 93%;
+    --input: 210 20% 93%;
+    --ring: 145 63% 42%;
+    --radius: 0.75rem;
+    --chart-1: 145 63% 42%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "buildCommand": "next build",
+  "devCommand": "next dev --turbopack -p 9002",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["fra1"]
+}
