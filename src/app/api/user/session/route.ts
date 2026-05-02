@@ -10,20 +10,29 @@ export async function POST(request: NextRequest) {
     const vkId = Number(body.vkId);
     const fullName = String(body.fullName ?? "Пользователь");
     const phone = String(body.phone ?? "");
-    const intent = body.intent === "host" ? "host" : "guest";
+    const intent = body.intent === "host" ? "host" : body.intent === "admin" ? "admin" : "guest";
 
-    if (!vkId) return NextResponse.json({ error: "vkId is required" }, { status: 400 });
+    if (!vkId) {
+      return NextResponse.json({ error: "vkId is required" }, { status: 400 });
+    }
 
-    const { data: existing } = await supabase
+    // Проверяем существующего пользователя
+    const { data: existing, error: selectError } = await supabase
       .from("app_users")
       .select("id,vk_id,role,is_blocked")
       .eq("vk_id", vkId)
       .maybeSingle();
 
+    if (selectError) {
+      console.error("[session] select error:", selectError);
+      return NextResponse.json({ error: `DB select error: ${selectError.message}` }, { status: 500 });
+    }
+
     if (existing?.is_blocked) {
       return NextResponse.json({ error: "Пользователь заблокирован" }, { status: 403 });
     }
 
+    // Создаём нового пользователя
     if (!existing) {
       const { data: created, error: createError } = await supabase
         .from("app_users")
@@ -32,12 +41,14 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (createError || !created) {
-        return NextResponse.json({ error: createError?.message ?? "Failed to create user" }, { status: 400 });
+        console.error("[session] insert error:", createError);
+        return NextResponse.json({ error: createError?.message ?? "Failed to create user" }, { status: 500 });
       }
 
       return NextResponse.json({ user: created }, { status: 201 });
     }
 
+    // Апгрейд роли guest → host
     if (intent === "host" && existing.role === "guest") {
       const { data: upgraded, error: updateError } = await supabase
         .from("app_users")
@@ -47,14 +58,16 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (updateError || !upgraded) {
-        return NextResponse.json({ error: updateError?.message ?? "Failed to upgrade role" }, { status: 400 });
+        console.error("[session] upgrade error:", updateError);
+        return NextResponse.json({ error: updateError?.message ?? "Failed to upgrade role" }, { status: 500 });
       }
 
       return NextResponse.json({ user: upgraded });
     }
 
     return NextResponse.json({ user: existing });
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
+  } catch (e: any) {
+    console.error("[session] fatal error:", e);
+    return NextResponse.json({ error: e.message ?? "Internal error" }, { status: 500 });
   }
 }

@@ -13,27 +13,16 @@ export function RoleSelector({ vkId }: { vkId: string }) {
     setLoading(true);
 
     try {
-      // Обновляем роль пользователя в базе
       const res = await fetch("/api/user/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vkId: Number(vkId),
-          fullName: "",
-          intent: role,
-        }),
+        body: JSON.stringify({ vkId: Number(vkId), fullName: "", intent: role }),
       });
 
-      if (!res.ok) {
-        console.warn("[RoleSelector] Failed to update role");
-      }
+      if (!res.ok) console.warn("[RoleSelector] Failed to update role");
 
-      // Переходим на нужную страницу
-      if (role === "host") {
-        router.push("/owner");
-      } else {
-        router.push("/catalog");
-      }
+      if (role === "host") router.push("/owner");
+      else router.push("/catalog");
     } catch (err) {
       console.error("[RoleSelector] Error:", err);
       setLoading(false);
@@ -41,48 +30,102 @@ export function RoleSelector({ vkId }: { vkId: string }) {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>Аренда помещений</h1>
-        <p style={styles.subtitle}>в Нижнем Новгороде</p>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-mesh px-4 py-8">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-5%] right-[-10%] w-80 h-80 bg-indigo-300/30 rounded-full blur-[100px] animate-float-slow" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-72 h-72 bg-purple-300/25 rounded-full blur-[90px] animate-float-slow" style={{ animationDelay: "2.5s" }} />
+        <div className="absolute top-[40%] left-[60%] w-48 h-48 bg-pink-300/20 rounded-full blur-[70px] animate-float" style={{ animationDelay: "1.5s" }} />
+      </div>
 
-        <div style={styles.divider} />
+      <div className="relative z-10 w-full max-w-sm">
+        {/* Header */}
+        <div className="text-center mb-8 animate-scale-in">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-3d">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" />
+            </svg>
+          </div>
+          <h1 className="text-[1.75rem] font-black text-gray-900 tracking-tight">Аренда помещений</h1>
+          <p className="text-base font-bold text-gradient mt-1">в Нижнем Новгороде</p>
+        </div>
 
-        <p style={styles.question}>Что вы хотите сделать?</p>
+        <p className="text-center text-gray-400 text-sm font-medium mb-6 animate-fade-in" style={{ animationDelay: "0.2s", opacity: 0, animationFillMode: "forwards" }}>
+          Кем вы хотите быть сегодня?
+        </p>
 
-        <div style={styles.buttonsContainer}>
+        <div className="space-y-3">
+          {/* Rent card */}
           <button
-            style={{
-              ...styles.button,
-              ...styles.buttonRent,
-              opacity: loading && selectedRole !== "guest" ? 0.5 : 1,
-            }}
             onClick={() => handleSelect("guest")}
             disabled={loading}
+            className={`
+              group w-full relative overflow-hidden rounded-[1.75rem] p-5 text-left
+              transition-all duration-300 ease-out animate-slide-up
+              ${loading && selectedRole !== "guest" ? "opacity-40" : "opacity-100 hover:scale-[1.02] active:scale-[0.98]"}
+              ${selectedRole === "guest" ? "scale-[0.98]" : ""}
+            `}
+            style={{ animationDelay: "0.3s", opacity: 0, animationFillMode: "forwards" }}
           >
-            <span style={styles.buttonIcon}>🏠</span>
-            <span style={styles.buttonText}>Хочу снять</span>
-            <span style={styles.buttonDesc}>Найти и забронировать помещение</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 opacity-[0.94] group-hover:opacity-100 transition-all duration-300" />
+            <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="relative flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 border border-white/20 shadow-inner">
+                🔍
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-white">Хочу снять</h3>
+                <p className="text-white/70 text-xs mt-0.5">Найти и забронировать помещение</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all group-hover:translate-x-0.5">
+                <svg className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </button>
 
+          {/* Host card */}
           <button
-            style={{
-              ...styles.button,
-              ...styles.buttonHost,
-              opacity: loading && selectedRole !== "host" ? 0.5 : 1,
-            }}
             onClick={() => handleSelect("host")}
             disabled={loading}
+            className={`
+              group w-full relative overflow-hidden rounded-[1.75rem] p-5 text-left
+              transition-all duration-300 ease-out animate-slide-up
+              ${loading && selectedRole !== "host" ? "opacity-40" : "opacity-100 hover:scale-[1.02] active:scale-[0.98]"}
+              ${selectedRole === "host" ? "scale-[0.98]" : ""}
+            `}
+            style={{ animationDelay: "0.4s", opacity: 0, animationFillMode: "forwards" }}
           >
-            <span style={styles.buttonIcon}>🔑</span>
-            <span style={styles.buttonText}>Хочу сдать</span>
-            <span style={styles.buttonDesc}>Разместить свою площадку</span>
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 opacity-[0.94] group-hover:opacity-100 transition-all duration-300" />
+            <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '18px 18px' }} />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="relative flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 border border-white/20 shadow-inner">
+                🏠
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-white">Хочу сдать</h3>
+                <p className="text-white/70 text-xs mt-0.5">Разместить площадку и зарабатывать</p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all group-hover:translate-x-0.5">
+                <svg className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
           </button>
         </div>
 
+        <p className="text-center text-gray-300 text-xs mt-6 animate-fade-in" style={{ animationDelay: "0.6s", opacity: 0, animationFillMode: "forwards" }}>
+          Можно изменить в профиле в любой момент
+        </p>
+
         {loading && (
-          <div style={styles.loadingOverlay}>
-            <div style={styles.spinner} />
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/20 backdrop-blur-lg rounded-3xl animate-fade-in">
+            <div className="w-12 h-12 rounded-full border-[3px] border-gray-200 border-t-indigo-500 animate-spin" />
           </div>
         )}
       </div>
@@ -90,100 +133,3 @@ export function RoleSelector({ vkId }: { vkId: string }) {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    padding: "20px",
-  },
-  card: {
-    background: "white",
-    borderRadius: "20px",
-    padding: "32px",
-    width: "100%",
-    maxWidth: "360px",
-    textAlign: "center",
-    position: "relative",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-  },
-  title: {
-    fontSize: "24px",
-    fontWeight: "bold",
-    margin: "0 0 4px 0",
-    color: "#333",
-  },
-  subtitle: {
-    fontSize: "16px",
-    margin: 0,
-    color: "#666",
-  },
-  divider: {
-    height: "1px",
-    background: "#eee",
-    margin: "20px 0",
-  },
-  question: {
-    fontSize: "18px",
-    fontWeight: 500,
-    margin: "0 0 20px 0",
-    color: "#333",
-  },
-  buttonsContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  button: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "20px",
-    borderRadius: "12px",
-    border: "2px solid transparent",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    gap: "4px",
-  },
-  buttonRent: {
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "white",
-  },
-  buttonHost: {
-    background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-    color: "white",
-  },
-  buttonIcon: {
-    fontSize: "32px",
-  },
-  buttonText: {
-    fontSize: "18px",
-    fontWeight: "bold",
-  },
-  buttonDesc: {
-    fontSize: "12px",
-    opacity: 0.9,
-  },
-  loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(255,255,255,0.8)",
-    borderRadius: "20px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  spinner: {
-    width: "40px",
-    height: "40px",
-    border: "3px solid #eee",
-    borderTop: "3px solid #667eea",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  },
-};
