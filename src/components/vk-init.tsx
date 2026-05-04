@@ -16,6 +16,7 @@ export function VkInit() {
       .then((config: any) => {
         if (config && config.appearance) {
           const appearance = config.appearance;
+          console.log('[VK] Initial appearance:', appearance);
           document.documentElement.setAttribute('data-vk-appearance', appearance);
           if (appearance === 'dark') {
             document.documentElement.classList.add('dark');
@@ -32,6 +33,7 @@ export function VkInit() {
     bridge.subscribe((event) => {
       if (event.detail.type === 'VKWebAppUpdateConfig') {
         const { appearance } = event.detail.data;
+        console.log('[VK] Theme changed:', appearance);
         document.documentElement.setAttribute('data-vk-appearance', appearance);
         
         // Sync with Tailwind dark mode (uses class strategy)
