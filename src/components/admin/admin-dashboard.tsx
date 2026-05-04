@@ -14,7 +14,7 @@ type AnalyticsData = {
   hourlyActivity?: Array<{ hour_of_day: number; bookings_count: number; total_revenue: number }>;
 };
 
-const EMPTY_VENUE_FORM = { ownerId: "", title: "", description: "", city: "Нижний Новгород", address: "", venueType: "loft", capacity: 10, rentalMode: "hourly", baseHourlyRate: 0, baseDailyRate: 0, minimumHours: 2, weekendMultiplier: 1, nightMultiplier: 1, cleaningFee: 0, discountPercent: 0, inventoryText: "", photoUrlsText: "" };
+  const EMPTY_VENUE_FORM = { ownerId: "", title: "", description: "", city: "Нижний Новгород", address: "", venueType: "loft", capacity: 10, rentalMode: "hourly", baseHourlyRate: 0, baseDailyRate: 0, minimumHours: 2, weekendMultiplier: 1, nightMultiplier: 1, cleaningFee: 0, discountPercent: 0, inventoryText: "", photoUrlsText: "" };
 const EMPTY_USER_FORM = { vkId: "", fullName: "", phone: "", role: "guest", hostAccessLevel: "basic" };
 const ROLE_COLORS: Record<string, string> = { admin: "bg-gradient-to-r from-rose-500 to-orange-500", host: "bg-gradient-to-r from-violet-500 to-purple-500", guest: "bg-gradient-to-r from-emerald-500 to-teal-500" };
 const LEVEL_COLORS: Record<string, string> = { basic: "bg-slate-500/20 text-slate-300 border-slate-500/30", pro: "bg-amber-500/20 text-amber-300 border-amber-500/30", extended: "bg-rose-500/20 text-rose-300 border-rose-500/30" };
@@ -249,14 +249,29 @@ export function AdminDashboard() {
 
   async function submitVenueForm() {
     setSuccess(null);
-    if (!venueForm.ownerId || !venueForm.title) { setError("Для площадки обязательны ownerId и название"); return; }
+    if (!venueForm.ownerId || !venueForm.title) { setError("Для площадки обязательны владелец и название"); return; }
     const payload = { ownerId: venueForm.ownerId, title: venueForm.title, description: venueForm.description, city: venueForm.city, address: venueForm.address, venueType: venueForm.venueType, capacity: Number(venueForm.capacity), discountPercent: Number(venueForm.discountPercent), inventory: parseInventory(venueForm.inventoryText), photos: parsePhotoUrls(venueForm.photoUrlsText), pricing: { rentalMode: venueForm.rentalMode, baseHourlyRate: Number(venueForm.baseHourlyRate), baseDailyRate: Number(venueForm.baseDailyRate), minimumHours: Number(venueForm.minimumHours), weekendMultiplier: Number(venueForm.weekendMultiplier), nightMultiplier: Number(venueForm.nightMultiplier), cleaningFee: Number(venueForm.cleaningFee) } };
-    if (editingVenueId) {
-      await fetch("/api/admin/venues", { method: "PATCH", headers, body: JSON.stringify({ venueId: editingVenueId, venuePatch: { title: payload.title, description: payload.description, city: payload.city, address: payload.address, venue_type: payload.venueType, capacity: payload.capacity }, pricingPatch: { base_hourly_rate: payload.pricing.baseHourlyRate, base_daily_rate: payload.pricing.baseDailyRate, minimum_hours: payload.pricing.minimumHours, weekend_multiplier: payload.pricing.weekendMultiplier, night_multiplier: payload.pricing.nightMultiplier, cleaning_fee: payload.pricing.cleaningFee }, discountPercent: payload.discountPercent, inventory: payload.inventory, photos: payload.photos }) });
-    } else {
-      await fetch("/api/admin/venues", { method: "POST", headers, body: JSON.stringify(payload) });
+    
+    try {
+      let res;
+      if (editingVenueId) {
+        res = await fetch("/api/admin/venues", { method: "PATCH", headers, body: JSON.stringify({ venueId: editingVenueId, venuePatch: { title: payload.title, description: payload.description, city: payload.city, address: payload.address, venue_type: payload.venueType, capacity: payload.capacity }, pricingPatch: { base_hourly_rate: payload.pricing.baseHourlyRate, base_daily_rate: payload.pricing.baseDailyRate, minimum_hours: payload.pricing.minimumHours, weekend_multiplier: payload.pricing.weekendMultiplier, night_multiplier: payload.pricing.nightMultiplier, cleaning_fee: payload.pricing.cleaningFee }, discountPercent: payload.discountPercent, inventory: payload.inventory, photos: payload.photos }) });
+      } else {
+        res = await fetch("/api/admin/venues", { method: "POST", headers, body: JSON.stringify(payload) });
+      }
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Неизвестная ошибка" }));
+        throw new Error(errorData.error || `HTTP ${res.status}`);
+      }
+      
+      setVenueForm(EMPTY_VENUE_FORM); setVenuePhotos([]); 
+      setSuccess(editingVenueId ? "Площадка обновлена" : "Площадка создана"); 
+      setEditingVenueId(null); 
+      await loadAll();
+    } catch (e: any) {
+      setError(`Ошибка сохранения: ${e.message}`);
     }
-    setVenueForm(EMPTY_VENUE_FORM); setVenuePhotos([]); setSuccess(editingVenueId ? "Площадка обновлена" : "Площадка создана"); setEditingVenueId(null); await loadAll();
   }
 
   async function submitUserForm() {
@@ -290,6 +305,7 @@ export function AdminDashboard() {
 
   async function deleteUser(userId: string) { if (!confirm("Удалить пользователя?")) return; await fetch(`/api/admin/users?userId=${userId}`, { method: "DELETE", headers }); await loadAll(); }
   async function deleteVenue(venueId: string) { if (!confirm("Удалить площадку?")) return; await fetch(`/api/admin/venues?venueId=${venueId}`, { method: "DELETE", headers }); await loadAll(); }
+  async function deleteAllVenues() { if (!confirm("Удалить ВСЕ площадки? Это действие необратимо!")) return; const promises = venues.map(v => fetch(`/api/admin/venues?venueId=${v.id}`, { method: "DELETE", headers })); await Promise.all(promises); await loadAll(); setSuccess("Все площадки удалены"); }
 
   async function savePhotoOrder(nextPhotos: VenuePhoto[]) {
     if (!editingVenueId) return;
@@ -372,7 +388,12 @@ export function AdminDashboard() {
         <Accordion title={`${editingVenueId ? "Редактирование" : "Создание"} площадки`} icon={Building2} isOpen={openAccordion === "venue"} onToggle={() => setOpenAccordion(openAccordion === "venue" ? null : "venue")}>
           <div className="space-y-4 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <GlassInput label="Владелец (ID)" placeholder="UUID пользователя" value={venueForm.ownerId} onChange={(e) => setVenueForm({ ...venueForm, ownerId: e.target.value })} />
+              <GlassSelect label="Владелец" value={venueForm.ownerId} onChange={(e) => setVenueForm({ ...venueForm, ownerId: e.target.value })}>
+                <option value="">Выберите пользователя</option>
+                {users.filter(u => u.role === "host" || u.role === "admin").map((u) => (
+                  <option key={u.id} value={u.id}>{u.full_name} (VK: {u.vk_id})</option>
+                ))}
+              </GlassSelect>
               <GlassInput label="Название" placeholder="Название площадки" value={venueForm.title} onChange={(e) => setVenueForm({ ...venueForm, title: e.target.value })} />
               <GlassInput label="Город" value={venueForm.city} onChange={(e) => setVenueForm({ ...venueForm, city: e.target.value })} />
               <GlassInput label="Адрес" placeholder="Улица, дом" value={venueForm.address} onChange={(e) => setVenueForm({ ...venueForm, address: e.target.value })} />
@@ -446,6 +467,9 @@ export function AdminDashboard() {
           </div>
         </Accordion>
 
+        <div className="flex items-center justify-between mb-4">
+          <GlassButton onClick={deleteAllVenues} variant="danger" className="!px-4"><Trash2 className="w-4 h-4 inline mr-2" />Удалить все площадки</GlassButton>
+        </div>
         <SectionCard title={`Площадки (${venues.length})`} icon={Building2} delay={200}>
           <div className="mb-4">
             <div className="relative">
