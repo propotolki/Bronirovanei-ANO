@@ -9,6 +9,20 @@ export function VkInit() {
     bridge.send('VKWebAppInit')
       .then(() => {
         console.log('[VK] VKWebAppInit success');
+        
+        // Get initial theme after init
+        return bridge.send('VKWebAppGetConfig');
+      })
+      .then((config: any) => {
+        if (config && config.appearance) {
+          const appearance = config.appearance;
+          document.documentElement.setAttribute('data-vk-appearance', appearance);
+          if (appearance === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
       })
       .catch((err) => {
         console.warn('[VK] VKWebAppInit failed (probably running outside VK)', err);
@@ -19,6 +33,13 @@ export function VkInit() {
       if (event.detail.type === 'VKWebAppUpdateConfig') {
         const { appearance } = event.detail.data;
         document.documentElement.setAttribute('data-vk-appearance', appearance);
+        
+        // Sync with Tailwind dark mode (uses class strategy)
+        if (appearance === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
       }
     });
   }, []);

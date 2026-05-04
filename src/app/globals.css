@@ -33,6 +33,34 @@
     --chart-4: 43 90% 62%;
     --chart-5: 280 80% 58%;
   }
+
+  .dark {
+    /* 2026 Ultra — тёмная молодёжная тема */
+    --background: 240 10% 4%;
+    --foreground: 0 0% 95%;
+    --card: 240 8% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 8% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 250 95% 68%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 250 20% 14%;
+    --secondary-foreground: 250 30% 85%;
+    --muted: 240 6% 12%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 340 90% 62%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 58%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 16%;
+    --input: 240 6% 16%;
+    --ring: 250 95% 68%;
+    --chart-1: 250 95% 68%;
+    --chart-2: 340 90% 62%;
+    --chart-3: 180 70% 48%;
+    --chart-4: 43 90% 62%;
+    --chart-5: 280 80% 58%;
+  }
 }
 
 @layer base {
@@ -85,6 +113,26 @@
       radial-gradient(at 100% 100%, rgba(245,158,11,0.1) 0px, transparent 50%),
       radial-gradient(at 0% 100%, rgba(59,130,246,0.1) 0px, transparent 50%),
       linear-gradient(180deg, #fafafa 0%, #f8f7ff 50%, #fafafa 100%);
+  }
+  .dark .bg-gradient-mesh {
+    background: 
+      radial-gradient(at 0% 0%, rgba(99,102,241,0.25) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(236,72,153,0.2) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(245,158,11,0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(59,130,246,0.15) 0px, transparent 50%),
+      linear-gradient(180deg, #0a0a0f 0%, #0f0a1a 50%, #0a0a0f 100%);
+  }
+  .dark .glass {
+    background: rgba(20, 20, 30, 0.65);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .dark .glass-strong {
+    background: rgba(20, 20, 30, 0.85);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
   .shadow-3d {
     box-shadow: 
