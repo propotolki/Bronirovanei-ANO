@@ -82,13 +82,13 @@ export function SplashScreen({ onComplete }: { onComplete: (vkId: string, isAdmi
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-indigo-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="glass rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl border border-white/60">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-rose-400 to-orange-400 flex items-center justify-center text-3xl shadow-lg">
             😕
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Что-то пошло не так</h2>
-          <p className="text-gray-500 text-sm mb-6 leading-relaxed">{error}</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">Что-то пошло не так</h2>
+          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="w-full py-3.5 px-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-2xl font-semibold shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
@@ -131,7 +131,7 @@ export function SplashScreen({ onComplete }: { onComplete: (vkId: string, isAdmi
 
         {/* Title with staggered animation */}
         <div className="animate-slide-up" style={{ animationDelay: "0.1s", opacity: 0, animationFillMode: "forwards" }}>
-          <h1 className="text-[2.25rem] font-black text-gray-900 tracking-tight leading-none mb-2">
+          <h1 className="text-[2.25rem] font-black text-foreground tracking-tight leading-none mb-2">
             Аренда помещений
           </h1>
         </div>
@@ -141,7 +141,7 @@ export function SplashScreen({ onComplete }: { onComplete: (vkId: string, isAdmi
           </p>
         </div>
         <div className="animate-slide-up" style={{ animationDelay: "0.3s", opacity: 0, animationFillMode: "forwards" }}>
-          <p className="text-sm text-gray-400 font-medium mb-10">
+          <p className="text-sm text-muted-foreground font-medium mb-10">
             Найди идеальное место для своего мероприятия
           </p>
         </div>
@@ -149,12 +149,12 @@ export function SplashScreen({ onComplete }: { onComplete: (vkId: string, isAdmi
         {loading && (
           <div className="animate-fade-in flex flex-col items-center gap-4">
             <div className="relative w-14 h-14">
-              <div className="absolute inset-0 rounded-full border-[3px] border-gray-100" />
+              <div className="absolute inset-0 rounded-full border-[3px] border-muted" />
               <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-indigo-500 animate-spin" />
               <div className="absolute inset-1 rounded-full border-[2px] border-transparent border-t-purple-400 animate-spin" style={{ animationDuration: "1.5s", animationDirection: "reverse" }} />
               <div className="absolute inset-2 rounded-full border-[1.5px] border-transparent border-t-pink-400 animate-spin" style={{ animationDuration: "2s" }} />
             </div>
-            <p className="text-sm text-gray-400 font-medium animate-pulse">{logs[logs.length - 1] || "Загрузка..."}</p>
+            <p className="text-sm text-muted-foreground font-medium animate-pulse">{logs[logs.length - 1] || "Загрузка..."}</p>
           </div>
         )}
       </div>

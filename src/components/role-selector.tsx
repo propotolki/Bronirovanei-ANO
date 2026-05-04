@@ -45,11 +45,11 @@ export function RoleSelector({ vkId }: { vkId: string }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" />
             </svg>
           </div>
-          <h1 className="text-[1.75rem] font-black text-gray-900 tracking-tight">Аренда помещений</h1>
+          <h1 className="text-[1.75rem] font-black text-foreground tracking-tight">Аренда помещений</h1>
           <p className="text-base font-bold text-gradient mt-1">в Нижнем Новгороде</p>
         </div>
 
-        <p className="text-center text-gray-400 text-sm font-medium mb-6 animate-fade-in" style={{ animationDelay: "0.2s", opacity: 0, animationFillMode: "forwards" }}>
+        <p className="text-center text-muted-foreground text-sm font-medium mb-6 animate-fade-in" style={{ animationDelay: "0.2s", opacity: 0, animationFillMode: "forwards" }}>
           Кем вы хотите быть сегодня?
         </p>
 
@@ -119,13 +119,13 @@ export function RoleSelector({ vkId }: { vkId: string }) {
           </button>
         </div>
 
-        <p className="text-center text-gray-300 text-xs mt-6 animate-fade-in" style={{ animationDelay: "0.6s", opacity: 0, animationFillMode: "forwards" }}>
+        <p className="text-center text-muted-foreground text-xs mt-6 animate-fade-in" style={{ animationDelay: "0.6s", opacity: 0, animationFillMode: "forwards" }}>
           Можно изменить в профиле в любой момент
         </p>
 
         {loading && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/20 backdrop-blur-lg rounded-3xl animate-fade-in">
-            <div className="w-12 h-12 rounded-full border-[3px] border-gray-200 border-t-indigo-500 animate-spin" />
+            <div className="w-12 h-12 rounded-full border-[3px] border-muted border-t-indigo-500 animate-spin" />
           </div>
         )}
       </div>
