@@ -40,21 +40,56 @@ export async function POST(request: NextRequest) {
       photos = [],
     } = body;
 
+    // Insert directly into listings table with raw SQL to avoid trigger issues
+    // Use a simple insert with the status column properly handled
+    const statusValue = "pending"; // New venues start as pending (text, will be cast by DB)
+    
+    // First, let's try to insert using the Supabase client but with raw SQL for the status
     const { data: venue, error: venueError } = await supabase
-      .from("venues")
-      .insert({ owner_id: ownerId, title, description, city, address, venue_type: venueType, capacity })
-      .select("id")
-      .single();
+      .rpc('insert_venue_safe', {
+        p_host_id: ownerId,
+        p_title: title,
+        p_description: description,
+        p_city: city,
+        p_address: address,
+        p_venue_type: venueType,
+        p_capacity: capacity
+      });
 
-    if (venueError || !venue) {
-      return NextResponse.json({ error: venueError?.message ?? "Create venue failed" }, { status: 400 });
+    if (venueError) {
+      console.error('[Venue POST] RPC insert_venue_safe failed:', venueError);
+      // Fallback: try direct insert with raw SQL
+      const { data: rawData, error: rawError } = await supabase
+        .from('listings')
+        .insert({ 
+          host_id: ownerId, 
+          title, 
+          description, 
+          city, 
+          address, 
+          venue_type: venueType, 
+          capacity,
+          status: statusValue as any
+        })
+        .select('id')
+        .single();
+      
+      if (rawError || !rawData) {
+        return NextResponse.json({ error: rawError?.message ?? venueError.message ?? "Create venue failed" }, { status: 400 });
+      }
+      var venueId = rawData.id;
+    } else {
+      var venueId = Array.isArray(venue) && venue.length > 0 ? venue[0].id : (venue as any)?.id;
+      if (!venueId) {
+        return NextResponse.json({ error: "Failed to get venue ID after insert" }, { status: 400 });
+      }
     }
 
     const discountedHourly = Math.max(0, Number(pricing.baseHourlyRate) * (1 - Number(discountPercent) / 100));
     const discountedDaily = Math.max(0, Number(pricing.baseDailyRate) * (1 - Number(discountPercent) / 100));
 
     const { error: pricingError } = await supabase.from("pricing_rules").insert({
-      venue_id: venue.id,
+      venue_id: venueId,
       rental_mode: pricing.rentalMode,
       base_hourly_rate: discountedHourly,
       base_daily_rate: discountedDaily,
@@ -67,14 +102,14 @@ export async function POST(request: NextRequest) {
     if (pricingError) return NextResponse.json({ error: pricingError.message }, { status: 400 });
 
     if (photos.length) {
-      const photoPayload = photos.map((url: string, i: number) => ({ venue_id: venue.id, photo_url: url, sort_order: i }));
+      const photoPayload = photos.map((url: string, i: number) => ({ venue_id: venueId, photo_url: url, sort_order: i }));
       const { error: photosError } = await supabase.from("venue_photos").insert(photoPayload);
       if (photosError) return NextResponse.json({ error: photosError.message }, { status: 400 });
     }
 
     if (inventory.length) {
       const payload = inventory.map((item: { name: string; included?: boolean; unitPrice?: number; quantity?: number }) => ({
-        venue_id: venue.id,
+        venue_id: venueId,
         name: item.name,
         included: Boolean(item.included),
         unit_price: Number(item.unitPrice ?? 0),
@@ -85,8 +120,9 @@ export async function POST(request: NextRequest) {
       if (inventoryError) return NextResponse.json({ error: inventoryError.message }, { status: 400 });
     }
 
-    return NextResponse.json({ venueId: venue.id }, { status: 201 });
+    return NextResponse.json({ venueId }, { status: 201 });
   } catch (e) {
+    console.error('[Venue POST] Unexpected error:', e);
     return NextResponse.json({ error: (e as Error).message }, { status: 403 });
   }
 }
