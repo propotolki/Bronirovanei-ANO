@@ -5,32 +5,8 @@ import bridge from '@vkontakte/vk-bridge';
 
 export function VkInit() {
   useEffect(() => {
-    // Initialize VK Mini App
-    bridge.send('VKWebAppInit')
-      .then(() => {
-        console.log('[VK] VKWebAppInit success');
-        
-        // Get initial theme after init
-        return bridge.send('VKWebAppGetConfig');
-      })
-      .then((config: any) => {
-        if (config && config.appearance) {
-          const appearance = config.appearance;
-          console.log('[VK] Initial appearance:', appearance);
-          document.documentElement.setAttribute('data-vk-appearance', appearance);
-          if (appearance === 'dark') {
-            document.documentElement.classList.add('dark');
-          } else {
-            document.documentElement.classList.remove('dark');
-          }
-        }
-      })
-      .catch((err) => {
-        console.warn('[VK] VKWebAppInit failed (probably running outside VK)', err);
-      });
-
-    // Handle theme changes
-    bridge.subscribe((event) => {
+    // Subscribe to events BEFORE initializing to catch the initial config
+    function handleEvent(event: any) {
       if (event.detail.type === 'VKWebAppUpdateConfig') {
         const { appearance } = event.detail.data;
         console.log('[VK] Theme changed:', appearance);
@@ -43,7 +19,22 @@ export function VkInit() {
           document.documentElement.classList.remove('dark');
         }
       }
-    });
+    }
+    
+    bridge.subscribe(handleEvent);
+
+    // Initialize VK Mini App
+    bridge.send('VKWebAppInit')
+      .then(() => {
+        console.log('[VK] VKWebAppInit success');
+      })
+      .catch((err) => {
+        console.warn('[VK] VKWebAppInit failed (probably running outside VK)', err);
+      });
+
+    return () => {
+      bridge.unsubscribe(handleEvent);
+    };
   }, []);
 
   return null;
