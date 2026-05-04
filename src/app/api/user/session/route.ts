@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     // Проверяем существующего пользователя
     const { data: existing, error: selectError } = await supabase
       .from("app_users")
-      .select("id,vk_id,role,is_blocked")
+      .select("id,vk_id,full_name,phone,role,host_access_level,is_blocked")
       .eq("vk_id", vkId)
       .maybeSingle();
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
           role: intent,
           host_access_level: "basic",
         })
-        .select("id,vk_id,role,is_blocked")
+        .select("id,vk_id,full_name,phone,role,host_access_level,is_blocked")
         .single();
 
       if (createError || !created) {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         .from("app_users")
         .update({ role: "host" })
         .eq("id", existing.id)
-        .select("id,vk_id,role,is_blocked")
+        .select("id,vk_id,full_name,phone,role,host_access_level,is_blocked")
         .single();
 
       if (updateError || !upgraded) {
