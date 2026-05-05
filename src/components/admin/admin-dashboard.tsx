@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Users, Building2, BarChart3, RefreshCw, Plus, Pencil, Trash2, Ban, CheckCircle2, Shield, UserCog, User, TrendingUp, Clock, DollarSign, ChevronDown, ChevronUp, ImageIcon, ArrowLeft, ArrowRight, X, Search, AlertCircle, CheckCircle } from "lucide-react";
+import { Users, Building2, BarChart3, RefreshCw, Plus, PlusCircle, Pencil, Trash2, Ban, CheckCircle2, Shield, UserCog, User, TrendingUp, Clock, DollarSign, ChevronDown, ChevronUp, ImageIcon, ArrowLeft, ArrowRight, X, Search, AlertCircle, CheckCircle } from "lucide-react";
 
 type UserRow = { id: string; vk_id: number; full_name: string; role: "host" | "guest" | "admin"; host_access_level: "basic" | "pro" | "extended"; is_blocked: boolean };
 type VenueRow = { id: string; title: string; city: string; venue_type: string; capacity: number; is_active: boolean };
@@ -183,6 +183,36 @@ export function AdminDashboard() {
   const [searchUser, setSearchUser] = useState("");
   const [searchVenue, setSearchVenue] = useState("");
   const [venueForm, setVenueForm] = useState(EMPTY_VENUE_FORM);
+
+  // Inventory state for venue creation
+  interface InventoryItem {
+    id: number;
+    name: string;
+    price: string;
+    quantity: string;
+  }
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([
+    { id: 1, name: '', price: '', quantity: '1' }
+  ]);
+  const [nextInventoryId, setNextInventoryId] = useState(2);
+
+  const addInventoryItem = () => {
+    setInventoryItems([...inventoryItems, { id: nextInventoryId, name: '', price: '', quantity: '1' }]);
+    setNextInventoryId(nextInventoryId + 1);
+  };
+
+  const removeInventoryItem = (id: number) => {
+    if (inventoryItems.length > 1) {
+      setInventoryItems(inventoryItems.filter(item => item.id !== id));
+    }
+  };
+
+  const updateInventoryItem = (id: number, field: keyof InventoryItem, value: string) => {
+    setInventoryItems(inventoryItems.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
   const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
   const [userForm, setUserForm] = useState(EMPTY_USER_FORM);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -250,7 +280,16 @@ export function AdminDashboard() {
   async function submitVenueForm() {
     setSuccess(null);
     if (!venueForm.ownerId || !venueForm.title) { setError("Для площадки обязательны владелец и название"); return; }
-    const payload = { ownerId: venueForm.ownerId, title: venueForm.title, description: venueForm.description, city: venueForm.city, address: venueForm.address, venueType: venueForm.venueType, capacity: Number(venueForm.capacity), discountPercent: Number(venueForm.discountPercent), inventory: parseInventory(venueForm.inventoryText), photos: parsePhotoUrls(venueForm.photoUrlsText), pricing: { rentalMode: venueForm.rentalMode, baseHourlyRate: Number(venueForm.baseHourlyRate), baseDailyRate: Number(venueForm.baseDailyRate), minimumHours: Number(venueForm.minimumHours), weekendMultiplier: Number(venueForm.weekendMultiplier), nightMultiplier: Number(venueForm.nightMultiplier), cleaningFee: Number(venueForm.cleaningFee) } };
+    // Prepare inventory items (filter out empty names)
+    const inventoryPayload = inventoryItems
+      .filter(item => item.name.trim() !== '')
+      .map(item => ({
+        name: item.name,
+        included: false,
+        unitPrice: Number(item.price) || 0,
+        quantity: Number(item.quantity) || 1,
+      }));
+    const payload = { ownerId: venueForm.ownerId, title: venueForm.title, description: venueForm.description, city: venueForm.city, address: venueForm.address, venueType: venueForm.venueType, capacity: Number(venueForm.capacity), discountPercent: Number(venueForm.discountPercent), inventory: inventoryPayload, photos: parsePhotoUrls(venueForm.photoUrlsText), pricing: { rentalMode: venueForm.rentalMode, baseHourlyRate: Number(venueForm.baseHourlyRate), baseDailyRate: Number(venueForm.baseDailyRate), minimumHours: Number(venueForm.minimumHours), weekendMultiplier: Number(venueForm.weekendMultiplier), nightMultiplier: Number(venueForm.nightMultiplier), cleaningFee: Number(venueForm.cleaningFee) } };
     
     try {
       let res;
@@ -266,6 +305,8 @@ export function AdminDashboard() {
       }
       
       setVenueForm(EMPTY_VENUE_FORM); setVenuePhotos([]); 
+      setInventoryItems([{ id: 1, name: '', price: '', quantity: '1' }]);
+      setNextInventoryId(2);
       setSuccess(editingVenueId ? "Площадка обновлена" : "Площадка создана"); 
       setEditingVenueId(null); 
       await loadAll();
@@ -289,6 +330,8 @@ export function AdminDashboard() {
   async function startEditVenue(venue: VenueRow) {
     setEditingVenueId(venue.id);
     setVenueForm((prev) => ({ ...prev, ownerId: "", title: venue.title, city: venue.city, venueType: venue.venue_type, capacity: venue.capacity }));
+    setInventoryItems([{ id: 1, name: '', price: '', quantity: '1' }]);
+    setNextInventoryId(2);
     await loadVenuePhotos(venue.id); setOpenAccordion("venue");
   }
 
@@ -410,10 +453,68 @@ export function AdminDashboard() {
               <label className="text-xs font-medium text-white/50 uppercase tracking-wider">Описание</label>
               <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all min-h-[80px] resize-y" placeholder="Описание площадки..." value={venueForm.description} onChange={(e) => setVenueForm({ ...venueForm, description: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-white/50 uppercase tracking-wider">Инвентарь (название;цена;кол-во)</label>
-              <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all min-h-[60px] resize-y font-mono text-xs" placeholder="Проектор;500;1&#10;Микрофон;300;2" value={venueForm.inventoryText} onChange={(e) => setVenueForm({ ...venueForm, inventoryText: e.target.value })} />
-            </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-white/50 uppercase tracking-wider">Инвентарь</label>
+                  <GlassButton
+                    type="button"
+                    variant="ghost"
+                    className="!px-3 !py-1.5"
+                    onClick={addInventoryItem}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Добавить позицию
+                  </GlassButton>
+                </div>
+                {inventoryItems.map((item) => (
+                  <div key={item.id} className="grid grid-cols-3 gap-2 items-end">
+                    <div>
+                      <label htmlFor={`inv-name-${item.id}`} className="text-xs text-white/60">Название</label>
+                      <input
+                        id={`inv-name-${item.id}`}
+                        value={item.name}
+                        onChange={(e) => updateInventoryItem(item.id, 'name', e.target.value)}
+                        placeholder="Например, Стол"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor={`inv-price-${item.id}`} className="text-xs text-white/60">Цена, ₽</label>
+                      <input
+                        id={`inv-price-${item.id}`}
+                        type="number"
+                        value={item.price}
+                        onChange={(e) => updateInventoryItem(item.id, 'price', e.target.value)}
+                        placeholder="0"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor={`inv-qty-${item.id}`} className="text-xs text-white/60">Кол-во</label>
+                      <div className="flex gap-1">
+                        <input
+                          id={`inv-qty-${item.id}`}
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateInventoryItem(item.id, 'quantity', e.target.value)}
+                          placeholder="1"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all"
+                        />
+                        {inventoryItems.length > 1 && (
+                          <GlassButton
+                            type="button"
+                            variant="danger"
+                            className="!px-2 !py-1.5"
+                            onClick={() => removeInventoryItem(item.id)}
+                          >
+                            ✕
+                          </GlassButton>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-white/50 uppercase tracking-wider">Фото (URL по строкам)</label>
               <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-all min-h-[60px] resize-y font-mono text-xs" placeholder="https://..." value={venueForm.photoUrlsText} onChange={(e) => setVenueForm({ ...venueForm, photoUrlsText: e.target.value })} />
