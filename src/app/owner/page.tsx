@@ -1,22 +1,17 @@
 "use client"
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { PlusCircle, Home, CalendarIcon, DollarSign, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle, Home } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import type { Listing } from '@/lib/types';
+import type { Listing } from "@/lib/types";
 
 interface VenueAPI {
   id: string;
@@ -24,6 +19,20 @@ interface VenueAPI {
   city: string;
   price_per_night: number;
   status: string;
+  venue_type: string;
+  capacity: number;
+}
+
+interface BookingAPI {
+  id: string;
+  venue_id: string;
+  listing_id: string;
+  guest_id: string;
+  status: string;
+  total_amount: number;
+  start_at: string;
+  end_at: string;
+  listings?: { title: string };
 }
 
 function mapVenueToListing(venue: VenueAPI): Listing {
@@ -36,17 +45,35 @@ function mapVenueToListing(venue: VenueAPI): Listing {
     pricePerNight: venue.price_per_night || 0,
     status: venue.status as any,
     image: "https://placehold.co/600x400.png",
+    venueType: venue.venue_type,
+    capacity: venue.capacity,
   };
 }
 
 export default function OwnerPage() {
+  const router = useRouter();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("venues");
+  
+  // Venues state
   const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [venuesLoading, setVenuesLoading] = useState(true);
+  
+  // Bookings state
+  const [bookings, setBookings] = useState<BookingAPI[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
+  
+  // Stats state
+  const [stats, setStats] = useState<any>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  
+  // Form state
   const [title, setTitle] = useState('');
   const [city, setCity] = useState('');
   const [price, setPrice] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
+  // Fetch venues
   useEffect(() => {
     async function loadVenues() {
       try {
@@ -58,11 +85,49 @@ export default function OwnerPage() {
       } catch (e: any) {
         toast({ variant: 'destructive', title: 'Ошибка', description: e.message });
       } finally {
-        setLoading(false);
+        setVenuesLoading(false);
       }
     }
     loadVenues();
   }, [toast]);
+
+  // Fetch bookings
+  useEffect(() => {
+    async function loadBookings() {
+      try {
+        const res = await fetch("/api/host/bookings");
+        if (!res.ok) throw new Error("Failed to load bookings");
+        const json = await res.json();
+        setBookings(json.data || []);
+      } catch (e: any) {
+        console.error("Failed to load bookings:", e);
+      } finally {
+        setBookingsLoading(false);
+      }
+    }
+    if (activeTab === "bookings") {
+      loadBookings();
+    }
+  }, [activeTab, toast]);
+
+  // Fetch stats
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const res = await fetch("/api/host/stats");
+        if (!res.ok) throw new Error("Failed to load stats");
+        const json = await res.json();
+        setStats(json);
+      } catch (e: any) {
+        console.error("Failed to load stats:", e);
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+    if (activeTab === "stats") {
+      loadStats();
+    }
+  }, [activeTab, toast]);
 
   const handleAddListing = async () => {
     if (!title || !city || !price) {
@@ -75,7 +140,7 @@ export default function OwnerPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ownerId: "", // Will be set by server from session
+          ownerId: "",
           title,
           description: '',
           city,
@@ -115,16 +180,14 @@ export default function OwnerPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <AppHeader />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -133,68 +196,252 @@ export default function OwnerPage() {
         <h1 className="text-4xl font-headline font-bold mb-2">Кабинет хоста</h1>
         <p className="text-muted-foreground mb-8">Управление объектами аренды.</p>
 
-        <div className="grid md:grid-cols-2 gap-8">
-            <Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="venues">
+              <Home className="mr-2 h-4 w-4" />
+              Площадки
+            </TabsTrigger>
+            <TabsTrigger value="calendar">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              Календарь
+            </TabsTrigger>
+            <TabsTrigger value="bookings">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Бронирования
+            </TabsTrigger>
+            <TabsTrigger value="stats">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Статистика
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Venues Tab */}
+          <TabsContent value="venues" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card>
                 <CardHeader>
-                    <CardTitle>Новое объявление</CardTitle>
-                    <CardDescription>Добавьте объект для аренды.</CardDescription>
+                  <CardTitle>Новое объявление</CardTitle>
+                  <CardDescription>Добавьте объект для аренды.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="title">Название</Label>
-                        <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например, Студия в центре"/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="city">Город</Label>
-                        <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Москва"/>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="price">Цена за ночь, ₽</Label>
-                        <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="3000"/>
-                    </div>
-                    <Button onClick={handleAddListing} className="w-full">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Добавить объект
-                    </Button>
+                  <div className="space-y-2">
+                    <label htmlFor="title">Название</label>
+                    <input
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Например, Студия в центре"
+                      className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="city">Город</label>
+                    <input
+                      id="city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Нижний Новгород"
+                      className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="price">Цена за ночь, ₽</label>
+                    <input
+                      id="price"
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="3000"
+                      className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <Button onClick={handleAddListing} className="w-full">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Добавить объект
+                  </Button>
                 </CardContent>
-            </Card>
+              </Card>
 
-            <Card>
-                 <CardHeader>
-                    <CardTitle>Мои объявления</CardTitle>
-                    <CardDescription>Список ваших объектов.</CardDescription>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Мои объявления</CardTitle>
+                  <CardDescription>Список ваших объектов.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {venuesLoading ? (
+                    <div className="flex justify-center p-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : (
                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Название</TableHead>
-                                <TableHead>Город</TableHead>
-                                <TableHead>Цена</TableHead>
-                                <TableHead>Статус</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {listings.map(listing => (
-                                <TableRow key={listing.id}>
-                                    <TableCell>{listing.title}</TableCell>
-                                    <TableCell>{listing.city}</TableCell>
-                                    <TableCell>{listing.pricePerNight.toLocaleString('ru-RU')} ₽</TableCell>
-                                    <TableCell>{listing.status}</TableCell>
-                                </TableRow>
-                            ))}
-                            {listings.length === 0 && (
-                              <TableRow>
-                                <TableCell colSpan={4} className="text-center text-muted-foreground">
-                                  Пока нет объявлений
-                                </TableCell>
-                              </TableRow>
-                            )}
-                        </TableBody>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Название</TableHead>
+                          <TableHead>Город</TableHead>
+                          <TableHead>Цена</TableHead>
+                          <TableHead>Статус</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {listings.map(listing => (
+                          <TableRow key={listing.id}>
+                            <TableCell>{listing.title}</TableCell>
+                            <TableCell>{listing.city}</TableCell>
+                            <TableCell>{listing.pricePerNight.toLocaleString('ru-RU')} ₽</TableCell>
+                            <TableCell>
+                              <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
+                                {listing.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {listings.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center text-muted-foreground">
+                              Пока нет объявлений
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
                     </Table>
+                  )}
                 </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Calendar Tab */}
+          <TabsContent value="calendar" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Календарь доступности</CardTitle>
+                <CardDescription>Выберите дату для управления доступностью.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border"
+                />
+                {selectedDate && (
+                  <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                    <p className="font-semibold">Выбрана дата: {selectedDate.toLocaleDateString('ru-RU')}</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Здесь будет список бронирований на выбранную дату и возможность управления доступностью.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
             </Card>
-        </div>
+          </TabsContent>
+
+          {/* Bookings Tab */}
+          <TabsContent value="bookings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Бронирования</CardTitle>
+                <CardDescription>Список бронирований ваших площадок.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {bookingsLoading ? (
+                  <div className="flex justify-center p-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Площадка</TableHead>
+                        <TableHead>Даты</TableHead>
+                        <TableHead>Сумма</TableHead>
+                        <TableHead>Статус</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bookings.map((booking) => (
+                        <TableRow key={booking.id}>
+                          <TableCell>{booking.listings?.title || '—'}</TableCell>
+                          <TableCell>
+                            {formatDate(booking.start_at)} - {formatDate(booking.end_at)}
+                          </TableCell>
+                          <TableCell>{Number(booking.total_amount).toLocaleString('ru-RU')} ₽</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              booking.status === 'confirmed' ? 'default' :
+                              booking.status === 'pending' ? 'secondary' : 'destructive'
+                            }>
+                              {booking.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {bookings.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            Пока нет бронирований
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Stats Tab */}
+          <TabsContent value="stats" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Всего площадок</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">{listings.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Активные брони</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">
+                    {bookings.filter(b => b.status === 'confirmed').length}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Доход</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-3xl font-bold">
+                    {bookings
+                      .filter(b => b.status === 'confirmed')
+                      .reduce((sum, b) => sum + Number(b.total_amount), 0)
+                      .toLocaleString('ru-RU')} ₽
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            {statsLoading ? (
+              <div className="flex justify-center p-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : stats ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Детальная статистика</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <pre className="text-sm">{JSON.stringify(stats, null, 2)}</pre>
+                </CardContent>
+              </Card>
+            ) : null}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
