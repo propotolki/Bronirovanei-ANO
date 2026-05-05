@@ -21,8 +21,8 @@ export function RoleSelector({ vkId }: { vkId: string }) {
 
       if (!res.ok) console.warn("[RoleSelector] Failed to update role");
 
-      if (role === "host") router.push("/owner");
-      else router.push("/catalog");
+      if (role === "host") router.push(`/owner?vk_id=${vkId}`);
+      else router.push(`/catalog?vk_id=${vkId}`);
     } catch (err) {
       console.error("[RoleSelector] Error:", err);
       setLoading(false);

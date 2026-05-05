@@ -106,12 +106,25 @@ export default function OwnerPage() {
   useEffect(() => {
     async function loadVenues() {
       try {
-        const res = await fetch("/api/host/venues");
-        if (!res.ok) throw new Error("Failed to load venues");
+        // Get VK ID from URL or localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlVkId = urlParams.get('vk_id');
+        const storedVkId = typeof window !== 'undefined' ? localStorage.getItem("vk_id") : null;
+        const vkId = urlVkId || storedVkId || "";
+        
+        const res = await fetch("/api/host/venues", {
+          headers: { "x-vk-id": vkId }
+        });
+        
+        if (!res.ok) {
+          const errorJson = await res.json().catch(() => ({}));
+          throw new Error(errorJson.error || `HTTP ${res.status}: Failed to load venues`);
+        }
         const json = await res.json();
         const venues: VenueAPI[] = json.venues || [];
         setListings(venues.map(mapVenueToListing));
       } catch (e: any) {
+        console.error("Failed to load venues:", e);
         toast({ variant: 'destructive', title: 'Ошибка', description: e.message });
       } finally {
         setVenuesLoading(false);
@@ -287,13 +300,13 @@ export default function OwnerPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="price">Цена за ночь, ₽</label>
+                    <label htmlFor="price">Цена за час, ₽</label>
                     <input
                       id="price"
                       type="number"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      placeholder="3000"
+                      placeholder="500"
                       className="w-full p-2 border rounded-md"
                     />
                   </div>
@@ -391,10 +404,14 @@ export default function OwnerPage() {
                       </TableHeader>
                       <TableBody>
                         {listings.map(listing => (
-                          <TableRow key={listing.id}>
+                          <TableRow 
+                            key={listing.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => router.push(`/catalog/${listing.id}`)}
+                          >
                             <TableCell>{listing.title}</TableCell>
                             <TableCell>{listing.city}</TableCell>
-                            <TableCell>{listing.pricePerNight.toLocaleString('ru-RU')} ₽</TableCell>
+                            <TableCell>{listing.pricePerNight.toLocaleString('ru-RU')} ₽/час</TableCell>
                             <TableCell>
                               <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
                                 {listing.status}
