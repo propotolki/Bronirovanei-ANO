@@ -66,24 +66,24 @@ export function RoleSelector({ vkId }: { vkId: string }) {
             `}
             style={{ animationDelay: "0.3s", opacity: 0, animationFillMode: "forwards" }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 opacity-[0.94] group-hover:opacity-100 transition-all duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 opacity-100 group-hover:opacity-100 transition-all duration-300" />
             <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '18px 18px' }} />
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             
-            <div className="relative flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 border border-white/20 shadow-inner">
-                🔍
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 border border-white/30 shadow-inner">
+                  🔍
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Хочу снять</h3>
+                  <p className="text-white/90 text-sm mt-0.5 font-medium">Найти и забронировать помещение</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center group-hover:bg-white/25 transition-all group-hover:translate-x-0.5">
+                  <svg className="w-4 h-4 text-white group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold text-white">Хочу снять</h3>
-                <p className="text-white/70 text-xs mt-0.5">Найти и забронировать помещение</p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all group-hover:translate-x-0.5">
-                <svg className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
           </button>
 
           {/* Host card */}
@@ -98,24 +98,24 @@ export function RoleSelector({ vkId }: { vkId: string }) {
             `}
             style={{ animationDelay: "0.4s", opacity: 0, animationFillMode: "forwards" }}
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 opacity-[0.94] group-hover:opacity-100 transition-all duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 opacity-100 group-hover:opacity-100 transition-all duration-300" />
             <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '18px 18px' }} />
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             
-            <div className="relative flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 border border-white/20 shadow-inner">
-                🏠
+              <div className="relative flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-2xl shrink-0 border border-white/30 shadow-inner">
+                  🏠
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Хочу сдать</h3>
+                  <p className="text-white/90 text-sm mt-0.5 font-medium">Разместить площадку и зарабатывать</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center group-hover:bg-white/25 transition-all group-hover:translate-x-0.5">
+                  <svg className="w-4 h-4 text-white group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-bold text-white">Хочу сдать</h3>
-                <p className="text-white/70 text-xs mt-0.5">Разместить площадку и зарабатывать</p>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all group-hover:translate-x-0.5">
-                <svg className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
           </button>
         </div>
 
