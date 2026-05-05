@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Home, UserCircle, LogOut, Crown, ShieldCheck, MapPin } from "lucide-react";
 import {
@@ -73,15 +73,39 @@ export function AppHeader() {
     router.push('/');
   }
 
+  const pathname = usePathname();
+
+  const isMainPage = (path: string) => {
+    return path === "/" || path === "/catalog" || path === "/map" || path === "/profile";
+  };
+
+  const showBack = !isMainPage(pathname || "/");
+
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
     <header className="bg-card/80 backdrop-blur-sm border-b sticky top-0 z-40">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/catalog" className="flex items-center gap-2 font-bold text-lg text-primary">
-            <Home className="h-6 w-6" />
-            <span className="font-headline hidden sm:inline">VK Rental</span>
-          </Link>
-           
+          {showBack ? (
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-2 font-bold text-lg text-primary hover:opacity-80"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              <span className="font-headline hidden sm:inline">Назад</span>
+            </button>
+          ) : (
+            <Link href="/catalog" className="flex items-center gap-2 font-bold text-lg text-primary">
+              <Home className="h-6 w-6" />
+              <span className="font-headline hidden sm:inline">VK Rental</span>
+            </Link>
+          )}
+            
           <nav className="flex items-center gap-2 sm:gap-4 text-sm font-medium">
               <Button variant="ghost" asChild>
                 <Link href="/catalog">Каталог</Link>
