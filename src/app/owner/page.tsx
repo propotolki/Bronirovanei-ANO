@@ -72,6 +72,35 @@ export default function OwnerPage() {
   const [city, setCity] = useState('');
   const [price, setPrice] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  
+  // Inventory state
+  interface InventoryItem {
+    id: number;
+    name: string;
+    price: string;
+    quantity: string;
+  }
+  const [inventory, setInventory] = useState<InventoryItem[]>([
+    { id: 1, name: '', price: '', quantity: '1' }
+  ]);
+  const [nextInventoryId, setNextInventoryId] = useState(2);
+
+  const addInventoryItem = () => {
+    setInventory([...inventory, { id: nextInventoryId, name: '', price: '', quantity: '1' }]);
+    setNextInventoryId(nextInventoryId + 1);
+  };
+
+  const removeInventoryItem = (id: number) => {
+    if (inventory.length > 1) {
+      setInventory(inventory.filter(item => item.id !== id));
+    }
+  };
+
+  const updateInventoryItem = (id: number, field: keyof InventoryItem, value: string) => {
+    setInventory(inventory.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
 
   // Fetch venues
   useEffect(() => {
@@ -135,6 +164,16 @@ export default function OwnerPage() {
       return;
     }
     
+    // Prepare inventory items (filter out empty names)
+    const inventoryItems = inventory
+      .filter(item => item.name.trim() !== '')
+      .map(item => ({
+        name: item.name,
+        included: false,
+        unitPrice: Number(item.price) || 0,
+        quantity: Number(item.quantity) || 1,
+      }));
+
     try {
       const res = await fetch("/api/admin/venues", {
         method: "POST",
@@ -154,7 +193,8 @@ export default function OwnerPage() {
             weekendMultiplier: 1,
             nightMultiplier: 1,
             cleaningFee: 0,
-          }
+          },
+          inventory: inventoryItems,
         })
       });
       
@@ -167,6 +207,7 @@ export default function OwnerPage() {
       setTitle('');
       setCity('');
       setPrice('');
+      setInventory([{ id: 1, name: '', price: '', quantity: '1' }]);
       
       // Reload listings
       const reloadRes = await fetch("/api/host/venues");
@@ -256,6 +297,71 @@ export default function OwnerPage() {
                       className="w-full p-2 border rounded-md"
                     />
                   </div>
+
+                  {/* Inventory section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label>Инвентарь</label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addInventoryItem}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Добавить позицию
+                      </Button>
+                    </div>
+                    {inventory.map((item) => (
+                      <div key={item.id} className="grid grid-cols-3 gap-2 items-end">
+                        <div>
+                          <label htmlFor={`inv-name-${item.id}`} className="text-sm">Название</label>
+                          <input
+                            id={`inv-name-${item.id}`}
+                            value={item.name}
+                            onChange={(e) => updateInventoryItem(item.id, 'name', e.target.value)}
+                            placeholder="Например, Стол"
+                            className="w-full p-2 border rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor={`inv-price-${item.id}`} className="text-sm">Цена, ₽</label>
+                          <input
+                            id={`inv-price-${item.id}`}
+                            type="number"
+                            value={item.price}
+                            onChange={(e) => updateInventoryItem(item.id, 'price', e.target.value)}
+                            placeholder="0"
+                            className="w-full p-2 border rounded-md text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor={`inv-qty-${item.id}`} className="text-sm">Кол-во</label>
+                          <div className="flex gap-1">
+                            <input
+                              id={`inv-qty-${item.id}`}
+                              type="number"
+                              value={item.quantity}
+                              onChange={(e) => updateInventoryItem(item.id, 'quantity', e.target.value)}
+                              placeholder="1"
+                              className="w-full p-2 border rounded-md text-sm"
+                            />
+                            {inventory.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => removeInventoryItem(item.id)}
+                              >
+                                ✕
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   <Button onClick={handleAddListing} className="w-full">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Добавить объект
